@@ -137,7 +137,8 @@ class BundleTest(unittest.TestCase):
             self.assertEqual(set(result_archive.namelist()), {'result.json', 'evidence/access.txt'})
         self.assertIsNone(imported_result(workspace, 'local-browser', 1))
         receipt = Path(self.workspace_cli(workspace, 'bundle', 'import', output))
-        self.assertEqual(import_bundle(workspace, output), receipt)
+        workspace_alias = workspace / '..' / workspace.name
+        self.assertEqual(import_bundle(workspace_alias, output), receipt)
         self.assertEqual(
             fixture_objects(read_fixture(receipt.parent / 'result.json')['observations'])[1]['status'],
             'untested',

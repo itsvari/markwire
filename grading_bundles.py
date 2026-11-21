@@ -439,6 +439,7 @@ def extract_payload(
 
 
 def task_directory(root: Path, task_id: str, attempt: int) -> Path:
+    root = root.expanduser().resolve()
     parts = ('remote_tasks', task_id, str(attempt))
     require_bundle(
         all(not is_linked_path(root.joinpath(*parts[:length])) for length in range(1, len(parts) + 1)),
