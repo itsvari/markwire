@@ -1,15 +1,15 @@
 # Assignment policy
 
-Replace this guide with the policy for your assignment. Record the teaching team's decisions before setting `policy_confirmed` to `true`.
+Replace this starter template with the teaching team's policy for this assignment before setting `policy_confirmed` to `true`.
 
-- **Source and eligibility.** Specify how to identify the submitted version. For Git, choose a submitted commit, a deadline rule, or the branch head at preparation.
-- **Late work.** State which work is eligible and how any penalty applies.
-- **Runtime and verification.** List the supported operating systems, architecture, language version, dependencies, and commands. Identify the isolated environment for running submitted code.
-- **Deliverables.** List required files and how the rubric handles missing work.
-- **Starter material.** Describe the files students received and how to credit their changes.
-- **Membership.** Confirm the student IDs, names, and any account identifiers used for grading. Explain how to resolve attribution disputes.
-- **Assessment scope.** Decide which criteria assess the shared submission and which assess each member.
-- **Individual evidence.** Define acceptable evidence, how to link it to a student, and what to do when it is missing or disputed.
-- **Restrictions.** State applicable limits on submitted work or verification, and identify who resolves ambiguous cases.
-- **Diagnostics.** Distinguish automated findings from reproduced observations.
-- **Feedback and resubmission.** State whether students may revise, appeal, or resubmit, and how feedback should account for those options.
+- **Source and eligibility.** State how the assessed version is chosen. For Git submissions, choose explicit submitted commits, a deadline cut-off rule, or the branch head at preparation.
+- **Late work.** State which submissions remain eligible and how any late penalty is applied.
+- **Runtime and verification.** Specify supported operating systems, architectures, language versions, dependencies, build or test commands, and the isolated environment for running student code.
+- **Deliverables.** List required files and explain how the rubric treats missing or incomplete deliverables.
+- **Starter material.** Identify any starter files provided in `input/baseline/` and how student changes are credited against them.
+- **Membership and attribution.** Confirm which student IDs, names, and optional account handles are used for marking, and how attribution disputes are resolved.
+- **Assessment scope.** State which criteria are shared (`submission`) and which are assessed per student (`individual`).
+- **Individual evidence.** Define acceptable evidence for individual criteria, how it links to a student, and how to escalate missing or disputed evidence.
+- **Restrictions and escalations.** Record any limits on submitted code or verification steps, and name who settles ambiguous policy questions.
+- **Diagnostics.** Note how optional files in `input/diagnostics/` are treated as leads rather than verified findings.
+- **Feedback and resubmission.** State whether students may revise, appeal, or resubmit work, and how feedback should reflect those course rules.

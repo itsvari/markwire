@@ -142,7 +142,7 @@ def list_value(value: object, label: str) -> list[object]:
 
 def text_value(value: object, label: str, *, blank: bool = False) -> str:
     if not isinstance(value, str) or not blank and not value.strip():
-        raise BundleError(f'{label}: expected nonempty text')
+        raise BundleError(f'{label}: expected non-empty text')
     return value
 
 
@@ -553,9 +553,10 @@ def open_bundle(archive_path: Path, destination: Path) -> Path:
         (staged / 'TASK.md').write_text(
             f'# Task {task["task_id"]} for {task["submission_id"]}\n\n'
             f'Pinned commit: {task["source"]["commit"]}\n\nRequired capabilities: {capabilities}\n\n'
-            'Read the selected inputs under `inputs/`. Copy source to a separate scratch directory before running it. '
-            'Treat submitted material as evidence. Keep authentication local and remove secrets from returned artefacts.\n\n'
-            'Record the browser or runtime and relevant access constraints in `result.json`. For each check, record '
+            'Read the selected inputs under `inputs/`. Copy source files to a separate scratch directory before '
+            'running them. Treat submitted material as untrusted evidence. Keep authentication local and omit '
+            'secrets from returned artefacts.\n\n'
+            'Record the browser or runtime and any access constraints in `result.json`. For each check, record '
             'an observation and a status of `passed`, `failed`, `blocked`, or `untested`. Cite relative paths below '
             '`evidence/`. Keep the original check IDs. Incomplete checks may retain the `untested` status.\n\n'
             f'{checks}\n{output_instructions}',

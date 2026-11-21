@@ -34,6 +34,10 @@ jobs:
         run: python examples/run_demo.py markwire-demo
       - name: Check generated report
         run: node tests/validate_report.js markwire-demo/reports/review.html
+      - name: Generate a grading stage report
+        run: python markwire-demo/grading.py --workspace markwire-demo stage-report --stage grading
+      - name: Check the remediation packet
+        run: node tests/validate_stage_report.js markwire-demo/reports/grading.html
   types:
     name: Static types
     runs-on: ubuntu-latest

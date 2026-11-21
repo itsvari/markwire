@@ -447,11 +447,11 @@ def report(workspace: Workspace, state: ReviewState) -> None:
     stylesheet = report_stylesheet(assets, 'columns.css')
     script = (assets / 'columns.js').read_text(encoding='utf-8')
     page = (
-        '<!doctype html><html lang="en"><head><meta charset="utf-8">'
+        '<!doctype html><html lang="en-GB"><head><meta charset="utf-8">'
         '<meta name="viewport" content="width=device-width,initial-scale=1">'
         f'<meta name="color-scheme" content="dark"><title>{escape_html(title)} · Markwire</title>'
         f'<style>{stylesheet}</style></head><body class="columns">'
-        '<div id="app"><noscript><p class="empty-state">Enable JavaScript to inspect the interactive report. '
+        '<div id="app"><noscript><p class="empty-state">Enable JavaScript to inspect the interactive staff ledger. '
         'The comparison and proposed-grades CSV files contain the numerical results.</p></noscript></div>'
         '<div id="announcer" class="sr-only" aria-live="polite"></div>'
         f'<script id="report-data" type="application/json">{encoded}</script><script>{script}</script></body></html>'
@@ -464,7 +464,7 @@ def report(workspace: Workspace, state: ReviewState) -> None:
 
 def feedback_document(title: str, content: str, stylesheet: str) -> str:
     return (
-        '<!doctype html><html lang="en"><head><meta charset="utf-8">'
+        '<!doctype html><html lang="en-GB"><head><meta charset="utf-8">'
         '<meta name="viewport" content="width=device-width,initial-scale=1">'
         f'<meta name="color-scheme" content="dark"><title>{escape_html(title)}</title>'
         f'<style>{stylesheet}</style></head><body><main id="top">{content}</main></body></html>'
@@ -541,17 +541,19 @@ def feedback_section(
         feedback_score_row(criteria[criterion_id], assessment, len(members) > 1)
         for criterion_id, assessment in feedback['scores'].items()
     )
+    members_heading = 'Submission members' if len(members) > 1 else 'Submission member'
+    overall_heading = 'Overall remark · shared submission' if len(members) > 1 else 'Overall remark · submission'
     return (
         f'<article id="{submission_id}--{student_id}"><div class="eyebrow">Approved feedback · {submission_id}</div>'
         f'<h2>{name} {member_handle(member)}</h2>'
         f'<p class="student-grade">{escape_html(feedback["weighted_percentage"])}% · '
         f'{escape_html(feedback["raw_total"])} / {escape_html(maximum_score)}</p>'
-        f'<h3>Submission members</h3>{members_html(members)}'
+        f'<h3>{members_heading}</h3>{members_html(members)}'
         f'<p class="source">Graded snapshot {escape_html(feedback["commit"])}</p>'
-        f'<section class="overall"><h3>Overall remark · submission</h3>'
+        f'<section class="overall"><h3>{overall_heading}</h3>'
         f'<p>{escape_html(feedback["summary"])}</p></section>'
-        '<p class="total-note">The total includes submission scores and your individual scores. Shared feedback '
-        'applies to every submission member. Individual feedback below is yours.</p>'
+        '<p class="total-note">Your total combines shared submission criteria with your individual criteria. '
+        'Shared feedback applies to every member of the submission; individual feedback below applies only to you.</p>'
         f'<div class="scroll" tabindex="0" role="region" aria-label="Feedback for {name}">'
         '<table class="student-table"><thead><tr><th scope="col">Criterion</th><th scope="col">Score</th>'
         f'<th scope="col">Feedback</th></tr></thead><tbody>{score_rows}</tbody></table></div></article>'
@@ -586,10 +588,11 @@ def export_feedback(workspace: Workspace, state: ReviewState, destination: Path 
 
     write_json(destination / 'student-feedback.json', students)
     archive = (
-        f'<header class="masthead"><div class="eyebrow">Approved feedback archive</div>{heading}'
-        '<p class="intro">This archive contains the full roster. Share only the intended student’s file from '
-        'feedback/SUBMISSION_ID/STUDENT_ID.html. Each file includes shared submission feedback and '
-        'that student’s individual feedback.</p></header>' + ''.join(sections)
+        f'<header class="masthead"><div class="eyebrow">Private approved feedback archive</div>{heading}'
+        '<p class="intro">This private archive contains feedback for the entire roster. Do not share this file '
+        "with students; distribute only each recipient's standalone file from "
+        'feedback/SUBMISSION_ID/STUDENT_ID.html, which contains shared submission feedback and '
+        "that student's own individual feedback.</p></header>" + ''.join(sections)
     )
     write_text(
         destination / 'student-feedback.html', feedback_document(f'{assignment_title} feedback', archive, stylesheet)

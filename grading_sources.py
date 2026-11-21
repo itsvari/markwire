@@ -294,7 +294,7 @@ def choose_git_commit(
     if policy['mode'] == 'head':
         return branch_head, []
     if policy['deadline'] is None:
-        raise GradingError('Deadline source selection requires a cutoff')
+        raise GradingError('Deadline source selection requires a cut-off')
     cutoff_seconds = datetime.fromisoformat(policy['deadline']).timestamp()
     eligible: list[str] = []
     excluded: list[str] = []
@@ -307,7 +307,7 @@ def choose_git_commit(
             source_seconds < cutoff_seconds if policy['boundary'] == 'exclusive' else source_seconds <= cutoff_seconds
         )
         (eligible if qualifies else excluded).append(commit)
-    require(eligible, f'{submission_id}: no eligible commit before cutoff. Record a course ruling before retrying.')
+    require(eligible, f'{submission_id}: no eligible commit before cut-off. Record a course ruling before retrying.')
     return eligible[0], excluded
 
 
@@ -373,7 +373,7 @@ def validate_preparation(workspace: Workspace) -> None:
             path.is_file() and '.git' not in path.relative_to(baseline).parts and path.name != '.gitkeep'
             for path in baseline.rglob('*')
         )
-        require(has_baseline, 'Baseline is required but empty')
+        require(has_baseline, 'Baseline is required, but input/baseline/ is empty')
 
 
 def prepare(

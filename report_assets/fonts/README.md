@@ -1,8 +1,8 @@
 # IBM Plex Mono
 
-Markwire embeds these complete, unmodified WOFF2 files in its standalone reports. The browser uses its system monospace font for characters outside the included font.
+Markwire embeds these complete, unmodified WOFF2 font files inside its self-contained HTML reports. Browsers fall back to the system monospace font for characters outside this glyph set.
 
-The files are from the [IBM Plex Mono package at commit 2e90fe3](https://github.com/IBM/plex/tree/2e90fe366fdc27c12682db13e5aa20ded3d90908/packages/plex-mono). IBM Corp. distributes the font under the [SIL Open Font License 1.1](LICENSE.txt).
+These files come from the [IBM Plex Mono package at commit 2e90fe3](https://github.com/IBM/plex/tree/2e90fe366fdc27c12682db13e5aa20ded3d90908/packages/plex-mono). IBM Corp. distributes the font under the [SIL Open Font License 1.1](LICENSE.txt).
 
 | File | SHA-256 |
 | --- | --- |

@@ -1,4 +1,4 @@
-"""Create a complete Markwire demo with fictional grades and submissions."""
+"""Generate a self-contained Markwire demo with fictional submissions and grades."""
 
 from __future__ import annotations
 
@@ -71,13 +71,14 @@ def configure_assignment(destination: Path) -> None:
         criterion['scope'] = 'submission' if criterion['key'] == 'correctness' else 'individual'
     write_json(configuration_path, configuration)
     (destination / 'input/brief.md').write_text(
-        '# Fictional assignment\nImplement a reusable greeting function.\n',
+        '# Fictional assignment\n\n'
+        'Implement a reusable `greet(name)` function that returns a formatted greeting for valid names.\n',
         encoding='utf-8',
     )
     (destination / 'input/policy.md').write_text(
-        '# Demo policy\n'
-        'Use the branch head. The correctness criterion is shared and design is individual.\n'
-        'Evaluations and reviews are fictional fixtures.\n',
+        '# Demo policy\n\n'
+        'Pin the branch head for this fictional workspace. Correctness is a shared submission criterion and design '
+        'is an individual criterion. All evaluations, sanity checks, and approvals in this demo are synthetic fixtures.\n',
         encoding='utf-8',
     )
 
@@ -124,17 +125,22 @@ def populate_evaluation(record: DraftEvaluation, author: str) -> None:
             else:
                 score = SHARED_LOW_MARK if author == 'grader_B' else SHARED_HIGH_MARK
             feedback = (
-                'The function returns the expected greeting. Document which names it accepts.'
+                'Your greeting function returns the expected output for standard inputs. Document which names it '
+                'accepts and handle empty or whitespace-only inputs explicitly.'
                 if criterion == 'correctness'
-                else 'The function has a clear name. Explain why it accepts this input.'
+                else 'Your function signature and naming are clear and concise. Add a brief docstring explaining '
+                'its input contract and any assumptions.'
             )
             assessment.update({'score': score, 'feedback': feedback, 'evidence': ['greeting.py:1-2']})
             if author == 'arbiter':
                 assessment['rationale'] = (
-                    'The fictional record contains a separate authored assessment for each member.'
+                    'Synthetic arbiter rationale: verified greeting.py and recorded a separate authored assessment '
+                    'for each applicable scope.'
                 )
     record['summary'] = (
-        'The function produces the requested greeting. Define the accepted inputs and test the boundary cases.'
+        'Your implementation delivers a clear, readable greeting function for standard names. '
+        'However, it does not specify or guard against blank inputs, leaving edge-case behaviour undefined. '
+        'Next, document the accepted input contract and add boundary tests covering empty and whitespace inputs.'
     )
 
 
@@ -186,9 +192,9 @@ def create_demo(destination: Path) -> Path:
         )
         verification['checks'] = [
             {
-                'claim': 'The greeting function is present',
+                'claim': 'The greeting function is present and returns a greeting',
                 'status': 'confirmed',
-                'finding': 'The demo generator wrote the greeting function.',
+                'finding': 'Confirmed that greeting.py defines greet(name) in the synthetic fixture.',
                 'evidence': ['greeting.py:1-2'],
             }
         ]
@@ -200,7 +206,7 @@ def create_demo(destination: Path) -> Path:
             '--reviewer',
             'Fictional reviewer',
             '--notes',
-            'This approval is generated for the demo.',
+            'Synthetic approval generated for the offline demo.',
         )
     grading_command('export')
     return Path(grading_command('report'))

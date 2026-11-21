@@ -97,13 +97,22 @@
     submission.approved ? 'Approved' : submission.ready ? 'Awaiting approval' : 'Review required';
   /** @param {Submission} submission */
   const statusClass = (submission) =>
-    submission.approved ? 'aligned' : submission.ready ? 'scope' : 'review';
+    submission.approved ? 'approved' : submission.ready ? 'awaiting' : 'review';
+  /** @type {Readonly<Record<string, string>>} */
+  const statusGlyphs = { approved: '✓', awaiting: '○', review: '!' };
+  /** @param {Submission} submission */
+  const statusGlyph = (submission) =>
+    /* HTML */ `<i aria-hidden="true">${statusGlyphs[statusClass(submission)]}</i>`;
+  /** @param {number | null} spread */
+  const atTotalThreshold = (spread) => spread !== null && spread >= thresholds.total_spread;
+  /** @type {Readonly<Record<string, [string, string]>>} */
+  const checkStates = { confirmed: ['success', '✓'], refuted: ['danger', '✕'], unverified: ['warning', '?'] };
   /** @param {Submission} submission */
   const verdictLabel = (submission) => (submission.approved ? 'Approved verdict' : 'Proposed verdict');
   /** @param {Submission} submission */
   const statusBadge = (submission) =>
     /* HTML */ `<span class="status-badge status-${statusClass(submission)}"
-      ><i aria-hidden="true"></i>${statusLabel(submission)}</span
+      >${statusGlyph(submission)}${statusLabel(submission)}</span
     >`;
   /**
    * @param {Submission} submission
@@ -132,6 +141,14 @@
   /** @param {Submission} submission */
   const studentCount = (submission) =>
     `${submission.members.length} ${submission.members.length === 1 ? 'student' : 'students'}`;
+  /** @type {Readonly<Record<string, string>>} */
+  const stageReportLabels = {
+    setup: 'Setup stage report',
+    grading: 'Independent grading report',
+    arbitration: 'Arbitration stage report',
+    sanity: 'Sanity review report',
+    release: 'Release review report',
+  };
   /** @param {GradeTotals | null} totals */
   const rawTotal = (totals) =>
     totals
@@ -186,14 +203,20 @@
                   <span class="queue-top"
                     ><span class="mono">${escapeHtml(submission.id)}</span
                     ><span class="queue-state status-${statusClass(submission)}"
-                      ><i aria-hidden="true"></i>${submission.approved ? 'Approved' : 'Pending'}</span
+                      >${statusGlyph(submission)}${submission.approved ? 'Approved' : submission.ready ? 'Awaiting' : 'Review'}</span
                     ></span
                   ><strong class="queue-name"
                     >${submission.members.length > 1 ? `${studentCount(submission)} · ${escapeHtml(submission.members.map((member) => member.name).join(', '))}` : escapeHtml(submission.members[0].name)}</strong
                   ><span class="queue-meta"
                     ><span
                       >${submission.members.length > 1 ? studentCount(submission) : githubHandle(submission.members[0])}</span
-                    ><span class="mono">Δ ${formatScore(submission.spread)}</span></span
+                    ><span class="queue-flags"
+                      >${submission.missing.length ? /* HTML */ `<span class="queue-flag danger" title="${submission.missing.length === 1 ? '1 missing grader' : `${submission.missing.length} missing graders`}"><i aria-hidden="true">✕</i>${submission.missing.length}<span class="sr-only"> missing ${submission.missing.length === 1 ? 'grader' : 'graders'}</span></span>` : ''}<span
+                        class="mono delta ${atTotalThreshold(submission.spread) ? 'delta-disputed' : submission.spread === 0 ? 'delta-agree' : ''}"
+                        >${atTotalThreshold(submission.spread) ? '<i aria-hidden="true">⚑</i>' : ''}Δ
+                        ${formatScore(submission.spread)}</span
+                      ></span
+                    ></span
                   >
                 </button>`,
             )
@@ -201,8 +224,11 @@
         }
       </nav>
       <div class="sidebar-footer">
-        ${submissions.length} submissions ·
-        ${submissions.reduce((total, submission) => total + submission.members.length, 0)} students
+        ${submissions.length} ${submissions.length === 1 ? 'submission' : 'submissions'} ·
+        ${(() => {
+          const totalStudents = submissions.reduce((total, submission) => total + submission.members.length, 0);
+          return `${totalStudents} ${totalStudents === 1 ? 'student' : 'students'}`;
+        })()}
       </div>
     </aside>`;
   }
@@ -293,7 +319,7 @@
             <tr>
               <th scope="col">Criterion / subject</th>
               ${graders.map((grader) => /* HTML */ `<th scope="col" title="${escapeHtml(grader.name)}">${grader.code}</th>`).join('')}
-              <th scope="col">Δ</th>
+              <th scope="col" title="Score spread across available graders">Δ</th>
               <th scope="col" class="proposed-column">
                 ${submission.approved ? 'Approved' : 'Proposed'}
               </th>
@@ -328,7 +354,11 @@
                         return /* HTML */ `<td class="score candidate-score">${score}</td>`;
                       })
                       .join('')}
-                    <td class="delta ${row.disputed ? 'warning' : ''}">${formatScore(row.spread)}</td>
+                    <td
+                      class="delta ${row.disputed ? 'delta-disputed' : row.spread === 0 ? 'delta-agree' : ''}"
+                    >
+                      ${row.disputed ? '<i aria-hidden="true">⚑</i><span class="sr-only">At review threshold: </span>' : ''}${formatScore(row.spread)}
+                    </td>
                     <td class="proposed-score">
                       ${row.proposal ? formatScore(row.proposal.score) : 'Pending'}
                     </td>
@@ -371,7 +401,7 @@
           Component feedback
           <span class="mono"
             >${graders.filter((grader) => row.candidates[grader.id]).length}/${graders.length}
-            candidates</span
+            ${graders.length === 1 ? 'candidate' : 'candidates'}</span
           >
         </div>
         <h2>${escapeHtml(row.name)}</h2>
@@ -463,20 +493,24 @@
         .join('');
     }
     const labels = { blocker: 'Blocker', grade_impact: 'Grade impact', advisory: 'Advisory' };
+    const glyphs = { blocker: '■', grade_impact: '▲', advisory: '●' };
     const groupedFindings = submission.findings
       .map(
         (finding) =>
           /* HTML */ ` <details class="finding-row">
             <summary>
               <span class="finding-meta"
-                ><span class="finding-${escapeHtml(finding.severity)}"
-                  >${escapeHtml(labels[finding.severity])}</span
+                ><span class="severity-tag finding-${escapeHtml(finding.severity)}"
+                  ><i aria-hidden="true">${glyphs[finding.severity] ?? ''}</i>${escapeHtml(labels[finding.severity])}</span
                 >
                 · ${escapeHtml(finding.topic)}</span
               >
               <strong>${escapeHtml(finding.title)}</strong>
-              ${finding.impact === null ? '' : /* HTML */ `<span class="finding-meta">${escapeHtml(Number(finding.impact.toFixed(impactDecimalPlaces)))} percentage points</span>`}
-              ${finding.status === 'reconciled' ? '<span class="finding-meta">Reconciled</span>' : ''}
+              ${finding.impact === null ? '' : /* HTML */ `<span class="finding-meta">${(() => {
+                const points = Number(finding.impact.toFixed(impactDecimalPlaces));
+                return `${escapeHtml(points)} ${points === 1 ? 'percentage point' : 'percentage points'}`;
+              })()}</span>`}
+              ${finding.status === 'reconciled' ? '<span class="finding-meta finding-reconciled"><i aria-hidden="true">≡</i> Reconciled</span>' : ''}
             </summary>
             <p>${escapeHtml(finding.summary)}</p>
             ${
@@ -517,7 +551,7 @@
         <h2>Review before release</h2>
         ${statusBadge(submission)}
       </div>
-      ${stageGuides.length ? /* HTML */ `<nav class="stage-guide-links" aria-label="Staff stage guides">${stageGuides.map((guide) => /* HTML */ `<a href="${escapeHtml(guide.href)}">${escapeHtml(guide.stage)} guide</a>`).join('')}</nav>` : ''}
+      ${stageGuides.length ? /* HTML */ `<nav class="stage-guide-links" aria-label="Staff stage reports">${stageGuides.map((guide) => /* HTML */ `<a href="${escapeHtml(guide.href)}">${escapeHtml(stageReportLabels[guide.stage] ?? `${guide.stage} stage report`)}</a>`).join('')}</nav>` : ''}
       <div class="review-flags">
         ${reviewFindings(submission) || '<p>No outstanding review signals.</p>'}
       </div>
@@ -530,8 +564,8 @@
               return /* HTML */ `<div class="coverage-row">
                 <span class="mono">${escapeHtml(grader.code)}</span>
                 <span>${escapeHtml(grader.name)}</span>
-                <span class="${missing ? 'danger' : 'success'}"
-                  >${missing ? 'Missing' : 'Returned'}</span
+                <span class="coverage-state ${missing ? 'danger' : 'success'}"
+                  ><i aria-hidden="true">${missing ? '✕' : '✓'}</i>${missing ? 'Missing' : 'Returned'}</span
                 >
               </div>`;
             })
@@ -554,14 +588,21 @@
       <section class="review-policy">
         <h3>
           Sanity review ·
-          ${submission.verification ? (submission.verificationCurrent ? 'Current' : 'Stale') : 'Missing'}
+          ${
+            submission.verification
+              ? submission.verificationCurrent
+                ? '<span class="success"><i aria-hidden="true">✓</i> Current</span>'
+                : '<span class="warning"><i aria-hidden="true">◷</i> Stale</span>'
+              : '<span class="danger"><i aria-hidden="true">✕</i> Missing</span>'
+          }
         </h3>
         ${
           checks
             .map(
               (check) =>
                 /* HTML */ `<div class="review-check">
-                  <span class="${check.status === 'unverified' ? 'warning' : 'muted'}"
+                  <span class="check-state ${checkStates[check.status]?.[0] ?? 'muted'}"
+                    ><i aria-hidden="true">${checkStates[check.status]?.[1] ?? '·'}</i
                     >${escapeHtml(check.status)}</span
                   >
                   <h3>${escapeHtml(check.claim)}</h3>
@@ -578,14 +619,14 @@
       <section class="review-policy">
         <h3>Human approval</h3>
         <p>
-          ${submission.approved ? 'This submission has current human approval.' : submission.ready ? 'Grading and sanity review are complete. Current human approval is still required.' : 'Resolve the missing or stale records above before approval.'}
-          This report is read-only. Record approvals through the grading CLI after reviewing the
-          evidence; exporting grades is a separate action.
+          ${submission.approved ? 'This submission has current human approval.' : submission.ready ? 'Independent grading, arbitration, and sanity review are complete. Current human approval is still required.' : 'Resolve the missing or stale records above before recording approval.'}
+          This report is read-only. Record human approval through the grading CLI after inspecting the
+          evidence; exporting grades and feedback is a separate command.
         </p>
         <p>
-          Review thresholds: criterion spread ${thresholds.criterion_spread} points; total spread
-          ${thresholds.total_spread} points. Candidate disagreement does not automatically determine the
-          verdict.
+          Review thresholds: criterion spread ${thresholds.criterion_spread} ${thresholds.criterion_spread === 1 ? 'point' : 'points'};
+          total spread ${thresholds.total_spread} ${thresholds.total_spread === 1 ? 'point' : 'points'}.
+          Candidate disagreement flags items to check and never sets the verdict automatically.
         </p>
       </section>
     </section>`;
@@ -673,8 +714,8 @@
                   )}${rows.length ? '' : '<p class="empty-state">No differing criteria in this selection.</p>'}${renderOverallRemark(submission)}
                   <p class="totals-note">
                     ${graders.map((grader) => `${grader.code} / ${escapeHtml(grader.name)}`).join(' · ')}.
-                    Δ compares available raw scores. Missing reviews remain missing, never zero. Verdicts
-                    are separate judgements, not averages.
+                    Δ compares available raw scores. Missing evaluations stay missing and are never counted
+                    as zero. Verdicts are separate judgements, not averages.
                   </p>
                 </section>
                 ${renderInspector(submission, row)}`;
@@ -697,9 +738,8 @@
           <div class="submission-state">
             ${statusBadge(submission)}<span class="spread-summary"
               ><span class="muted">Candidate spread</span
-              ><b
-                class="mono ${submission.spread !== null && submission.spread >= thresholds.total_spread ? 'warning' : ''}"
-                >${submission.spread === null ? 'Insufficient reviews' : formatScore(submission.spread) + ' pts'}</b
+              ><b class="mono ${atTotalThreshold(submission.spread) ? 'warning' : ''}"
+                >${atTotalThreshold(submission.spread) ? '<i aria-hidden="true">⚑</i> ' : ''}${submission.spread === null ? 'Insufficient reviews' : `${formatScore(submission.spread)} ${submission.spread === 1 ? 'pt' : 'pts'}`}</b
               ></span
             >
           </div>
@@ -754,7 +794,7 @@
         <span>Grading and verification</span
         ><span
           >${submissions.filter((submission) => submission.approved).length}/${submissions.length}
-          submissions approved · No grades released by this report</span
+          ${submissions.length === 1 ? 'submission' : 'submissions'} approved · No grades are released by this report</span
         >
       </footer>
     </div>`;
@@ -762,7 +802,7 @@
       const position = scroll[panel.dataset.scroll ?? ''];
       if (position !== undefined) panel.scrollTop = position;
     }
-    announcer.textContent = `${visibleSubmissions.length} matching submissions. ${submission ? submission.id + ', ' + submission.members.map((member) => member.name).join(', ') : 'No report selected'}.`;
+    announcer.textContent = `${visibleSubmissions.length} matching ${visibleSubmissions.length === 1 ? 'submission' : 'submissions'}. ${submission ? submission.id + ', ' + submission.members.map((member) => member.name).join(', ') : 'No report selected'}.`;
   }
   reportRoot.addEventListener('input', (event) => {
     const search = /** @type {HTMLInputElement | null} */ (event.target);

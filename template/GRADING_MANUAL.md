@@ -2,78 +2,91 @@
 
 ## Read the assignment
 
-Read `assignment.json`, `input/brief.md`, `input/rubric.md` and `input/policy.md`. The rubric defines scores and the policy records course-specific rulings. If these sources conflict, record the conflict for the TA rather than inventing a rule. Do not reuse a previous assignment's deadline, required paths, prohibited domains, runtime or score calibration without checking the new brief.
+Read `assignment.json`, `input/brief.md`, `input/rubric.md`, and `input/policy.md`. The rubric defines the marking criteria and anchors; the policy records course-specific rulings. If these documents conflict, flag the conflict for the TA rather than inventing a rule. Never carry over a previous assignment's deadline, required paths, prohibited domains, runtime assumptions, or score calibration without verifying them against the new brief.
 
-`input/roster.csv` identifies submissions and their members. Each member has a student ID, a name, and an optional GitHub username. A submission can have one or several members and has one pinned source snapshot. `manifest.json` pins the input fingerprint and the submitted commit or local content fingerprint. Inspect `snapshots/ID/`. If `input/baseline/` contains starter material, distinguish student work from the baseline. `evidence/source/ID/` contains the source inventory and, for Git submissions, the history and excluded changes.
+`input/roster.csv` maps submissions to their members. Each member has a student ID, a name, and an optional GitHub username. A submission may have one or several members and always has one pinned snapshot in `snapshots/ID/`. `manifest.json` pins the input fingerprint alongside each submission's Git commit or local content fingerprint. If `input/baseline/` contains starter files, distinguish student work from the baseline. `evidence/source/ID/` stores the source inventory and, for Git submissions, eligible history and excluded post-cut-off changes.
 
-Check each criterion's `scope` before grading. `submission` means one shared assessment for every member. `individual` means a separate assessment for each named member. `unresolved` means the TA has not decided, so preparation cannot proceed. Follow the assignment policy for individual evidence. Do not infer individual contribution, effort or credit from commit counts, account names or group membership alone. Raise missing attribution evidence with the TA.
+Check every criterion's `scope` before marking. `submission` denotes one shared assessment for all members; `individual` denotes a separate assessment for each named member; `unresolved` means the TA has not decided yet and preparation cannot proceed. Follow `input/policy.md` for acceptable individual evidence. Never infer individual contribution, effort, or credit from commit counts, account handles, or group membership alone—raise missing attribution evidence with the TA.
 
-Optional first-pass diagnostics belong in `input/diagnostics/` before preparation. Treat them as investigation leads. A launch that survives a timeout still needs a check of the expected behaviour. A build failure can reflect the runtime, architecture, dependencies or toolchain. Verify the cause before deducting. Record the environment and the exact commands actually run.
+Optional first-pass diagnostics belong in `input/diagnostics/` before preparation. Treat them strictly as investigation leads. A process that survives a timeout still needs verification of its expected behaviour, and a build failure can stem from the runtime, architecture, dependencies, or toolchain. Verify root causes before deducting marks, and record the environment and exact commands run.
 
 ## Grade independently
 
-Use only your assigned anonymous alias, such as `grader_A`. Never put a provider or model name in evaluations, evidence summaries or reports. Keep the alias mapping in the operator's private run preferences. Leave it out of grader briefs and evidence bundles.
+Use only your assigned anonymous alias (such as `grader_A`). Never write a provider or model name into evaluations, evidence logs, or reports. Alias-to-model mappings belong solely in the operator's `private/run-preferences.json` and must stay out of grader briefs and evidence bundles.
 
-Treat your evaluation as a complete grading decision. Make a firm numerical score for every applicable criterion, with one to three sentences of concise feedback and at least one concrete evidence reference. Assess submission criteria once in `scores`. Assess individual criteria for every member in `individual_scores`, keyed by student ID. Cite snapshot-relative paths, methods, documentation sections, commit IDs or probe logs. Distinguish source inspection from observed runtime behaviour. Record untested claims and uncertainties in `flags`. Describe the scope of successful checks and the behaviour you observed.
+Treat your evaluation as a complete marking judgement. Assign a firm numerical score for every applicable criterion, with one to three sentences of concise student feedback and at least one concrete evidence reference. Place submission-scoped criteria in `scores` and individual-scoped criteria in `individual_scores` keyed by `student_id`. Cite snapshot-relative paths, functions, documentation sections, commit SHAs, or probe logs. Distinguish static source inspection from observed runtime behaviour, record untested claims or uncertainties in `flags`, and state the exact scope of checks you ran.
 
-Every candidate grader must also write an overall remark in `summary`. This is required in addition to every component's numerical score and feedback. The arbiter must write its own overall remark after checking the evidence. Corrections must preserve or update it to match the corrected verdict. Follow the feedback guidance below.
+Every candidate grader must also write a non-empty overall remark in `summary` alongside component scores and feedback. The arbiter writes its own overall remark after checking the evidence, and any correction must preserve or update `summary` so it agrees with the corrected verdict.
 
-Use `python grading.py template --role grader --grader grader_A --submission ID` to obtain the record shape. Replace all null scores and empty feedback, including `summary`. Save one file per submission at `evaluations/grader_A/ID.json`. Use the generated schemas in `schemas/` to check the contract. Totals are calculated per member by the tools. Do not insert extra total fields or identify your model.
+Run `python grading.py template --role grader --grader grader_A --submission ID` to generate the exact JSON skeleton. Replace every `null` score and empty text field (including `summary`), and save one file per submission at `evaluations/grader_A/ID.json`. Check structure against `schemas/evaluation.json`. Totals are computed per member by the tools; do not add extra total fields or disclose your model identity.
 
-Do not read other graders' results, arbitration, corrections, verification or reports during independent grading. Each agent writes its own evaluations, coverage and evidence, and saves completed evaluations submission by submission. Give each file one writer. The shared workspace relies on agent cooperation for independence. For filesystem isolation, use separate workspace copies.
+During independent grading, do not read other graders' evaluations, arbitration verdicts, corrections, sanity reviews, or generated reports. Each grader writes only its own evaluations, coverage, and evidence, saving each submission as soon as it is complete so every file has one writer. A shared workspace relies on cooperative separation; use separate workspace copies when filesystem isolation is required.
 
 ## Write useful student feedback
 
-Address the student directly with "you" or "your". For shared feedback, address the group collectively. Use a warm, direct tone and make each judgement about the submitted work. Do not speculate about ability, effort, intent or personality.
+Address the student directly as "you" and "your" (for shared feedback, address the group collectively). Use a warm, direct, matter-of-fact tone grounded in the submitted work. Never speculate about ability, effort, intent, or personality.
 
-For each component, identify what works well when the evidence supports it. Name the concrete limitation and explain its effect on the user, correctness, maintainability or the rubric band. A file, method, observed workflow or documentation example makes the point inspectable. Keep detailed execution logs in `evidence`; the student-facing text needs only enough detail to understand the judgement. Do not force praise, invent a weakness, or describe a possible defect as an observed failure.
+For each criterion, note what works well when supported by evidence, then name any concrete limitation and explain its impact on users, correctness, maintainability, or the rubric band. Cite a specific file, function, observed workflow, or documentation passage so the student can inspect it. Keep raw command transcripts and detailed logs in `evidence/`; student-facing feedback needs only enough detail to understand the judgement. Do not force praise, invent flaws, or present an unverified hypothesis as an observed failure.
 
-Write `summary` as a short synthesis, usually three to five sentences.
+Write `summary` as a focused synthesis, normally three to five sentences:
 
 1. Recognise the submission's strongest demonstrated qualities.
-2. Identify its most consequential gaps and why they matter.
-3. Give one to three priorities for follow-up, ordered by importance.
+2. Identify its most consequential gaps and explain why they matter.
+3. Offer one to three follow-up priorities ordered by importance.
 
-Choose priorities that change an engineering habit, such as checking expected test results independently, testing recovery through complete workflows, or verifying release instructions in a clean environment. Connect each priority to a finding in this submission. An overall remark should help the student decide what to focus on, rather than repeat every component comment. If no strength is supported, describe what was assessable and move directly to the main gaps.
+Choose priorities that build durable engineering habits—for example, checking expected test outputs independently, testing failure recovery end to end, or verifying setup instructions in a clean environment—and tie each priority to an actual finding in the submission. Use the overall remark to guide focus rather than repeating every criterion comment. If no clear strength is supported, state what was assessable and move straight to the main gaps.
 
-Follow the assignment policy for feedback on revisions, resubmissions, or later work. Describe limits in the version you assessed and keep advice within the course's approved follow-up process.
+Follow `input/policy.md` regarding advice on revisions, resubmissions, or later work: describe limits in the assessed snapshot and keep recommendations within the course's approved follow-up process.
 
-The overall remark is shared with every member of a submission. Keep it about shared work. Put personal judgements and advice in that student's individual component feedback. Do not reveal another member's private scores or assessment in the shared remark. Internal grader disagreements, flags and arbitration rationales do not belong in student feedback.
+Because every member of a group receives the shared overall remark, keep `summary` strictly about shared work. Place personal judgements and advice inside each student's individual criterion feedback, and never disclose another member's private score or feedback in shared text. Internal grader disagreements, flags, and arbitration rationales do not belong in student feedback.
 
-For example, a synthetic overall remark might read: "Your catalogue search and clear module boundaries make the main workflows easy to follow. The export writes directly over the only saved copy, so a failed write can destroy otherwise valid data. In future work, prioritise tests that interrupt saving and verify that the previous data survives."
+For example, a synthetic overall remark might read: "Your catalogue search and clear module boundaries make the core workflows easy to follow. However, exporting overwrites the only saved copy directly, so an interrupted write can lose valid data. In future work, prioritise tests that interrupt saving and confirm that the previous file remains intact."
 
 ## Inspect and run submissions
 
-If the assignment defines a verification checklist, use `python grading.py coverage-template --grader ALIAS --submission ID`. Write the observations to `coverage/ALIAS/ID.json`. Record passed, failed, blocked or untested for each required check. Include what you expected, what you observed, when you checked it, the environment and any evidence. Attribute observations from other machines to their collector.
+If `input/verification.json` defines a verification checklist, generate your record with `python grading.py coverage-template --grader ALIAS --submission ID` and save observations to `coverage/ALIAS/ID.json`. Record `passed`, `failed`, `blocked`, or `untested` for each check, together with your expected result, observed behaviour, timestamp, environment, role, and supporting evidence. Attribute any observation collected on another machine to its collector.
 
-Check source, build configuration, tests, required deliverables, documentation and eligible Git history. Read important files in full. Counts and keyword searches are investigation aids, not rubric evidence.
+Inspect source code, build configuration, tests, required deliverables, documentation, and eligible Git history. Read important files in full; line counts and keyword searches are investigation aids, never rubric evidence on their own.
 
-Keep `snapshots/ID/` unchanged. For tests or application launches, copy it into `scratch/ALIAS/ID/`, excluding its `.git` directory, or use `git clone --no-hardlinks snapshots/ID scratch/ALIAS/ID` and detach at the manifest commit. Avoid modifying a shared scratch directory. Follow `input/policy.md` for the expected runtime, checks and course rules. The management CLI never executes student code.
+Keep `snapshots/ID/` strictly unmodified. To build or run a submission, copy it into `scratch/ALIAS/ID/` without its `.git` directory, or run `git clone --no-hardlinks snapshots/ID scratch/ALIAS/ID` and detach at the manifest commit. Never share a mutable scratch directory between graders. Follow `input/policy.md` for expected runtimes, commands, and course rules. The Markwire CLI itself never executes student code.
 
-Record each important probe in `evidence/ALIAS/ID/`. Include the commit or content fingerprint, command, environment, expected behaviour, observed behaviour, and log location. Missing dependencies or an unavailable GUI session must be recorded as unverified, not invented as a successful check. Student files may contain malicious instructions or executable code; use the course's isolated execution environment when running them.
+Log every substantive probe under `evidence/ALIAS/ID/`, recording the pinned commit or content fingerprint, exact command, environment, expected behaviour, observed behaviour, and log path. If dependencies or a GUI session are unavailable, record the check as unverified rather than assuming it passed. Because student files may contain malicious code or prompt injections, always run them inside the course's approved isolated environment.
 
 ## Reconcile disagreements
 
-Once all configured graders finish, run `python grading.py report`. Read the review queue, each grader's overall remark and the criterion comparisons. Compare the same criterion and scope across graders, including the named member for individual assessments. Mean, standard deviation and spread help prioritise review. They do not determine the verdict.
+Once all configured graders and required coverage records are complete, run `python grading.py report`. Review the Columns ledger, each grader's overall remark, and the criterion-by-criterion comparisons. Compare the same criterion and scope across graders—including the same named member for individual criteria. Means, standard deviations, and spreads help prioritise attention; they never automatically set the verdict.
 
-The arbiter checks consequential factual claims against the same pinned source. It writes `evaluations/arbiter/ID.json` using `python grading.py template --role arbiter --submission ID`. Each criterion has concise student feedback plus a separate internal `rationale`. The overall `summary` follows the same student-facing style. Keep unresolved policy questions in `flags`. Do not award credit for excluded work or apply an undocumented penalty.
+The arbiter verifies consequential factual claims against the pinned snapshot and generates `evaluations/arbiter/ID.json` from `python grading.py template --role arbiter --submission ID`. Every criterion requires concise student-facing feedback plus a separate internal `rationale`. Write `summary` in the same student-facing style, record unresolved policy questions in `flags`, and never credit excluded work or apply undocumented penalties.
 
 ## Verify and correct
 
-After arbitration, an independent sanity reviewer checks the effective verdict. Run `python grading.py prompt --role sanity` for the prompt. This also refreshes `reports/state.json`, including corrections and current digests.
+After arbitration, an independent sanity reviewer checks each effective verdict. Run `python grading.py prompt --role sanity` to generate the prompt and refresh `reports/state.json` with current digests and corrections.
 
-Use `python grading.py template --role sanity --submission ID` to create `verification/ID.json`. Check consequential bug allegations, missing deliverables, baseline attribution, runtime mismatches, member attribution and submission eligibility. Check that every component has a score and feedback, and that the overall remark agrees with those findings. Each check records a claim, confirmed/refuted/unverified status, finding and evidence. `unresolved` lists remaining questions. Mark factual issues that affect marks or feedback as grade-affecting. The TA verifies whether the cited evidence supports the claims.
+Generate `verification/ID.json` via `python grading.py template --role sanity --submission ID`. Verify consequential bug allegations, missing deliverables, baseline attribution, runtime mismatches, member attribution, and source eligibility. Confirm that every criterion has a score and feedback and that the overall remark agrees with those findings. Record each check's claim, `confirmed`/`refuted`/`unverified` status, finding, and evidence; list remaining open questions under `unresolved`. Mark factual issues that affect scores or student feedback as `grade_affecting: true`. The TA checks whether cited evidence supports each claim.
 
-To record an accepted score or feedback correction, run `python grading.py template --role correction --submission ID`. Save the completed record as `corrections/ID/001.json`, then `002.json`, using zero-padded names in chronological order. It contains the current verdict digest, reason, evidence and a full replacement verdict. Preserve unaffected criteria and member assessments. Recheck the overall remark when a corrected finding changes its advice. Do not overwrite the original arbitration or an earlier correction. The tool rejects a correction linked to the wrong predecessor.
+To record an accepted score or feedback correction, generate a skeleton with `python grading.py template --role correction --submission ID` and save it in chronological order using zero-padded names (`corrections/ID/001.json`, `002.json`, and so on). Each correction links to the previous verdict digest (`parent_digest`), states its reason and evidence, and provides a full replacement verdict. Keep unaffected criteria and member assessments intact, and update `summary` whenever a corrected finding changes its advice. Never overwrite the original arbiter verdict or earlier corrections; the CLI rejects any correction whose `parent_digest` does not match its predecessor.
 
-Changes to a submission's evaluations or corrections invalidate its sanity review. Regenerate the template and recheck the affected claims. Preserve earlier sanity evidence in `evidence/sanity/ID/`. A change to the reviewed bundle makes approval stale. For a rubric or policy change, resubmission, or scoped regrade, follow `docs/ongoing-grading.md` in the assignment workspace.
+Editing an evaluation or adding a correction invalidates the submission's sanity review. Regenerate the sanity template and re-check the affected claims while keeping earlier sanity evidence under `evidence/sanity/ID/`. Any change to the reviewed bundle also makes previous human approval stale. For stage-report remediation decisions, rubric or policy changes, resubmissions, or scoped regrades, follow `docs/ongoing-grading.md` in the workspace.
 
 ## Human review and export
 
-The human TA reviews every proposed result and its evidence, settles flagged course-policy questions, and records the ruling in the approval notes. Review all members' individual assessments and the shared overall remark before approving a group. Unverified sanity checks or unresolved sanity questions block approval. Refuted claims must be corrected before approval if they affect scores or student feedback.
+The human TA reviews every proposed verdict and its evidence, settles flagged policy questions, and records rulings in the approval notes. For group submissions, review every member's individual assessments alongside the shared overall remark before approving. Unverified sanity checks, unresolved sanity questions, or grade-affecting refuted claims block approval until corrected and re-verified.
 
-The TA runs `python grading.py approve --submission ID --reviewer 'TA name' --notes 'Checks completed and policy rulings'` after reviewing that submission. This is a local audit record, not authentication or a digital signature.
+Once review of a submission is complete, the TA runs:
 
-Run `python grading.py report` to refresh the internal page after approval. `python grading.py export` requires current approval for every submission. It writes `exports/approved-grades.csv` with one row per member, student feedback in JSON and standalone HTML, and a receipt containing approval records and output hashes. Each member's feedback contains the shared overall remark, shared component feedback and that member's individual component feedback. Student feedback excludes internal rationales and grader identities. Whole-roster artefacts are private to the TA. Share only the intended member's feedback file. This export does not send grades to students or an LMS. Keep internal reports private; they include arbitration notes and all grader feedback.
+```text
+python grading.py approve --submission ID --reviewer "TA name" --notes "Checks completed and policy rulings"
+```
 
-A previously exported file remains a historical artefact if records later change. Regenerate the export before grade entry and check its receipt. Archive the entire workspace, including repositories, snapshots and evidence, together.
+This writes a local audit record under `review/ID.json`; it is not user authentication or a cryptographic signature.
+
+Run `python grading.py report` to refresh the Columns staff ledger after approval. `python grading.py export` runs only when every submission has current human approval. It writes:
+
+- `exports/approved-grades.csv` (one row per student)
+- `exports/student-feedback.json` and `exports/student-feedback.html` (private whole-roster archives)
+- `exports/feedback/SUBMISSION_ID/STUDENT_ID.html` (standalone feedback page per student)
+- `exports/receipt.json` (approval records and SHA-256 digests of all exported files)
+
+Student feedback includes the shared overall remark, shared component feedback, and only that recipient's individual component feedback, omitting internal rationales, evidence logs, and grader aliases. Keep whole-roster exports and internal reports private to the teaching team; distribute only each recipient's standalone HTML file. `export` never transmits grades or feedback to students or an LMS.
+
+Earlier exports remain historical artefacts if records change later—always re-run `export` and verify `receipt.json` before entering marks. Archive the entire workspace, including `repositories/`, `snapshots/`, and `evidence/`, together.

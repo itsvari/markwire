@@ -271,7 +271,7 @@ def identifier(value: object, label: str) -> str:
 
 def nonempty(value: object, label: str) -> str:
     if not isinstance(value, str) or not value.strip():
-        raise GradingError(f'{label} must be nonempty text')
+        raise GradingError(f'{label} must be non-empty text')
     return value
 
 
@@ -300,7 +300,8 @@ def fields_with_optional(
 
 def json_array(value: object, label: str, minimum: int = 0) -> list[object]:
     if not isinstance(value, list) or len(value) < minimum:
-        raise GradingError(f'{label}: expected list with at least {minimum} items')
+        unit = 'item' if minimum == 1 else 'items'
+        raise GradingError(f'{label}: expected a list with at least {minimum} {unit}')
     return cast(list[object], value)
 
 
@@ -399,12 +400,12 @@ def parse_snapshot_policy(value: object) -> SnapshotPolicy:
     if mode == 'deadline':
         require(
             deadline is not None and datetime.fromisoformat(deadline).tzinfo is not None,
-            'Deadline must include a timezone offset',
+            'Deadline must include a time zone offset',
         )
     return {
         'mode': mode,
         'deadline': deadline,
-        'boundary': match_values(fields['boundary'], ('exclusive', 'inclusive'), 'Invalid cutoff boundary'),
+        'boundary': match_values(fields['boundary'], ('exclusive', 'inclusive'), 'Invalid cut-off boundary'),
         'timestamp': match_values(fields['timestamp'], ('committer', 'both'), 'Invalid timestamp convention'),
     }
 
@@ -419,16 +420,13 @@ def parse_assignment(value: object) -> Assignment:
     baseline_required = fields['baseline_required']
     if type(policy_confirmed) is not bool or type(baseline_required) is not bool:
         raise GradingError('Policy switches must be booleans')
-    graders = strings(fields['graders'], 'Configure at least one grader', 1)
+    graders = strings(fields['graders'], 'graders', 1)
     require(
         all(re.fullmatch(r'grader_[A-Z][A-Z0-9]*', grader) for grader in graders),
         'Use anonymous aliases such as grader_A',
     )
     require(len(set(graders)) == len(graders), 'Duplicate graders')
-    criteria = [
-        parse_criterion(criterion)
-        for criterion in json_array(fields['criteria'], 'Configure at least one criterion', 1)
-    ]
+    criteria = [parse_criterion(criterion) for criterion in json_array(fields['criteria'], 'criteria', 1)]
     require(len({criterion['key'] for criterion in criteria}) == len(criteria), 'Duplicate criterion keys')
     thresholds = fields_with_optional(
         fields['review_thresholds'],
@@ -719,7 +717,7 @@ class Workspace:
             'individual_scores': {'type': 'object'},
             'summary': {
                 **text,
-                'description': 'Overall submission remark: strengths, improvements and priorities for follow-up.',
+                'description': 'Overall submission remark: strengths, gaps and priorities for follow-up.',
             },
             'flags': {'type': 'array', 'items': text},
         }

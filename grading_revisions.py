@@ -630,7 +630,8 @@ def stage_revision(
             write_text(
                 setup,
                 original.rstrip()
-                + '\n\nSee the [ongoing grading guide](docs/ongoing-grading.md) for revisions and remote tasks.\n',
+                + '\n\nSee the [revision, remote-check, and decision guide](docs/ongoing-grading.md) for revisions, '
+                'stage decisions and remote checks.\n',
             )
     shutil.copytree(
         engine_root / 'report_assets', root / 'report_assets', ignore=shutil.ignore_patterns('.DS_Store', '._*')

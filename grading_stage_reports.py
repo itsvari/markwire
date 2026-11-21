@@ -177,9 +177,19 @@ def finding_id(*identity: str | None) -> str:
 
 def default_options(action: str, owner: str) -> tuple[Option, ...]:
     return (
-        Option('request-review', action, 'Send the finding and supporting evidence to the assigned role.', owner),
-        Option('defer', 'Defer', 'Record that a decision is still needed.', 'ta'),
-        Option('custom', 'Specify an action', 'Send your instructions to the assigned role.', owner),
+        Option('request-review', action, 'Route this finding and its supporting evidence to the assigned role.', owner),
+        Option(
+            'defer',
+            'Defer',
+            'Leave this finding open for later attention. Counts as a completed choice for hand-off.',
+            'ta',
+        ),
+        Option(
+            'custom',
+            'Specify an action',
+            'Write instructions below for the assigned role. Instructions are required.',
+            owner,
+        ),
     )
 
 
@@ -282,7 +292,7 @@ def score_findings(workspace: Workspace, submission: str, item: ReviewItem, incl
                 continue
             reconciled = include_verdict and item['proposal'] is not None
             next_step = (
-                'Inspect the arbitration rationale in Columns.'
+                'Inspect the arbitration rationale in the Columns ledger.'
                 if reconciled
                 else 'Reconcile the marks against the rubric and evidence.'
             )
@@ -337,8 +347,8 @@ def sanity_findings(submission: str, item: ReviewItem) -> list[Finding]:
                 check['finding'],
                 severity,
                 (source,),
-                'Resolve the finding against the current verdict and recheck any correction.',
-                default_options('Ask for a focused recheck', 'sanity'),
+                'Resolve the finding against the current verdict and re-check any correction.',
+                default_options('Ask for a focused re-check', 'sanity'),
             )
         )
     for index, claim in enumerate(verification['unresolved']):
@@ -563,28 +573,43 @@ def stage_progress(workspace: Workspace, state: ReviewState, stage: Stage) -> Pr
 def guide_stops(stage: Stage, progress: Progress, findings: list[Finding]) -> list[GuideStop]:
     open_findings = [item for item in findings if item.status == 'open']
     blockers = sum(item.severity == 'blocker' for item in open_findings)
+    actionable = sum(bool(item.options) for item in open_findings)
     next_steps: dict[Stage, str] = {
-        'setup': 'Launch the independent graders with the frozen rubric and verification requirements.',
-        'grading': 'Hand complete independent evaluations to the arbiter.',
-        'arbitration': 'Send the current verdicts to the sanity reviewer.',
+        'setup': 'Launch the independent graders with the frozen rubric and verification checklist.',
+        'grading': 'Hand complete independent evaluations and coverage records to the arbiter.',
+        'arbitration': 'Send the current verdicts to the independent sanity reviewer.',
         'sanity': 'Review the verified grade bundles and record human approval.',
-        'release': 'Export the approved grades and individual feedback.',
+        'release': 'Export the approved gradebook and standalone student feedback.',
     }
+    open_label = 'open finding' if len(open_findings) == 1 else 'open findings'
+    blocker_label = 'blocker' if blockers == 1 else 'blockers'
+    action_summary = (
+        f'{len(open_findings)} {open_label} · {blockers} {blocker_label} · {actionable} requiring a choice.'
+        if actionable
+        else f'{len(open_findings)} {open_label} · {blockers} {blocker_label}.'
+    )
+    action_next_step = (
+        'Choose one option for every open finding across all topics (Defer counts where offered; custom choices '
+        'require written instructions). Copy or download the single complete JSON packet once all findings are '
+        'answered, then import it with import-decisions.'
+        if actionable
+        else 'No open findings require a decision in this stage report.'
+    )
     return [
         {
             'title': 'What finished',
             'summary': f'{progress["complete"]} of {progress["total"]} · {progress["label"]}.',
-            'next_step': 'Open Columns to inspect the grading records.',
+            'next_step': 'Open the Columns ledger to inspect individual scores, feedback and evidence.',
         },
         {
             'title': 'What needs attention',
-            'summary': f'{len(open_findings)} open findings · {blockers} blockers.',
-            'next_step': 'Review findings in order of consequence and record the decisions that need action.',
+            'summary': action_summary,
+            'next_step': action_next_step,
         },
         {
             'title': 'Next in the workflow',
             'summary': next_steps[stage],
-            'next_step': 'Resolve blockers for the submissions you want to advance.' if blockers else '',
+            'next_step': 'Resolve blockers for any submission you want to advance.' if blockers else '',
         },
     ]
 
@@ -599,12 +624,14 @@ def operator_stops(workspace: Workspace, attempts: list[RemoteAttempt]) -> list[
         carried = sum(len(target['carry']) for target in targets)
         reassess = sum(len(target['reassess']) for target in targets)
         review = sum(target['review'] for target in targets)
+        carried_label = 'assessment' if carried == 1 else 'assessments'
+        review_label = 'submission' if review == 1 else 'submissions'
         stops.append(
             {
                 'title': 'Revision impact',
                 'summary': (
-                    f'{carried} assessments carried forward · {reassess} scheduled for reassessment '
-                    f'· {review} submissions to review.'
+                    f'{carried} {carried_label} carried forward · {reassess} scheduled for reassessment '
+                    f'· {review} {review_label} to review.'
                 ),
                 'next_step': field_text(revision, 'reason', 'Revision'),
             }
@@ -614,10 +641,11 @@ def operator_stops(workspace: Workspace, attempts: list[RemoteAttempt]) -> list[
         blocked = sum(
             observation['status'] == 'blocked' for result in returned for observation in result['observations']
         )
+        blocked_label = 'blocked observation' if blocked == 1 else 'blocked observations'
         stops.append(
             {
                 'title': 'Remote checks',
-                'summary': f'{len(returned)} of {len(attempts)} task attempts imported · {blocked} blocked observations.',
+                'summary': f'{len(returned)} of {len(attempts)} task attempts imported · {blocked} {blocked_label}.',
                 'next_step': 'Review the imported observations and follow up on missing access or unfinished checks.',
             }
         )
@@ -653,7 +681,7 @@ def stage_draft(workspace: Workspace, state: ReviewState, stage: str) -> ReportD
 def field_text(fields: Mapping[str, object], key: str, label: str) -> str:
     value = fields.get(key)
     if not isinstance(value, str) or not value.strip():
-        raise GradingError(f'{label} {key} must be nonempty text')
+        raise GradingError(f'{label} {key} must be non-empty text')
     return value
 
 
@@ -721,7 +749,7 @@ def curate_group(data: object, available: Mapping[str, Finding], workspace: Work
     severity = fields.get('severity', original_severity)
     require(isinstance(severity, str) and severity in SEVERITY_ORDER, 'Unknown curated severity')
     severity = cast(Severity, severity)
-    require(SEVERITY_ORDER[severity] <= SEVERITY_ORDER[original_severity], 'Curation cannot lower a finding’s severity')
+    require(SEVERITY_ORDER[severity] <= SEVERITY_ORDER[original_severity], "Curation cannot lower a finding's severity")
     options = structured_options(fields['options'], 'Curated finding options') if 'options' in fields else first.options
     require(first.status == 'open' or not options, 'A reconciled finding cannot request another decision')
     impacts = [item.impact_percentage_points for item in originals if item.impact_percentage_points is not None]
@@ -794,10 +822,11 @@ def stage_report(workspace: Workspace, state: ReviewState, stage: str, curation:
     script = (assets / 'stage.js').read_text(encoding='utf-8')
     title = escape(f'{workspace.config["title"]} · {STAGE_LABELS[scope]} · Markwire')
     page = (
-        '<!doctype html><html lang="en"><head><meta charset="utf-8">'
+        '<!doctype html><html lang="en-GB"><head><meta charset="utf-8">'
         '<meta name="viewport" content="width=device-width,initial-scale=1">'
         f'<title>{title}</title><style>{stylesheet}</style></head><body>'
-        f'<main id="stage-app"><noscript><p>Enable JavaScript to use the stage guide and decision queue.</p></noscript></main>'
+        '<main id="stage-app"><noscript><p>Enable JavaScript to inspect this stage report and complete the decision '
+        'hand-off.</p></noscript></main>'
         f'<script id="stage-data" type="application/json">{encoded}</script><script>{script}</script></body></html>'
     )
     target = workspace.root / 'reports' / f'{scope}.html'
@@ -807,7 +836,7 @@ def stage_report(workspace: Workspace, state: ReviewState, stage: str, curation:
 
 
 def normalise_decisions(value: object) -> list[Decision]:
-    require(isinstance(value, list) and bool(value), 'Decision response needs at least one decision')
+    require(isinstance(value, list) and bool(value), 'Decision packet must contain at least one decision')
     decisions: dict[str, Decision] = {}
     for entry in cast(list[object], value):
         require(
@@ -820,7 +849,7 @@ def normalise_decisions(value: object) -> list[Decision]:
         note = fields.get('note', '')
         require(isinstance(note, str), 'Decision note must be text')
         note = cast(str, note).strip()
-        require(option != 'custom' or bool(note), 'A custom decision needs instructions')
+        require(option != 'custom' or bool(note), 'Custom choices require written instructions in note')
         require(issue not in decisions, f'Duplicate decision for finding {issue}')
         decisions[issue] = {'issueId': issue, 'optionId': option, 'note': note}
     return [decisions[key] for key in sorted(decisions)]
@@ -858,13 +887,17 @@ def import_decisions(workspace: Workspace, state: ReviewState, response: Path, r
         persisted.get('review_digest') == review_digest == digest(content)
         and current['run_id'] == persisted.get('run_id') == run_id
         and current['source_digest'] == persisted.get('source_digest'),
-        'Decision response is stale or belongs to a different report. Review the latest report.',
+        'Decision packet is stale or belongs to a different report. Generate and review the latest stage report.',
     )
-    findings = {finding['id']: finding for finding in cast(list[SavedFinding], persisted['findings'])}
+    findings = {
+        finding['id']: finding
+        for finding in cast(list[SavedFinding], persisted['findings'])
+        if finding['status'] == 'open' and finding['options']
+    }
     actions = []
     for decision in decisions:
         finding = findings.get(decision['issueId'])
-        if finding is None or finding['status'] != 'open':
+        if finding is None:
             raise GradingError(f'Unknown or closed finding {decision["issueId"]}')
         selected = next((option for option in finding['options'] if option['id'] == decision['optionId']), None)
         if selected is None:
@@ -883,6 +916,12 @@ def import_decisions(workspace: Workspace, state: ReviewState, response: Path, r
                 'note': decision['note'],
             }
         )
+    unanswered = findings.keys() - {decision['issueId'] for decision in decisions}
+    require(
+        not unanswered,
+        'Answer every open finding with options before importing (partial packets are rejected). '
+        f'Unanswered remediation questions: {len(unanswered)}.',
+    )
     payload = {
         'schema_version': REPORT_SCHEMA_VERSION,
         **identity,

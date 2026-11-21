@@ -199,7 +199,7 @@ def load_run(workspace: Workspace, run_id: str) -> Run:
 def validate_slot(slot_name: str, value: object, targets: Sequence[str]) -> None:
     identifier(slot_name, 'Task slot')
     slot = exact_keys(value, Slot.__annotations__, f'Task slot {slot_name}')
-    require(slot['stage'] in STAGES, f'{slot_name}: Unknown orchestration stage')
+    require(slot['stage'] in STAGES, f'{slot_name}: unknown orchestration stage')
     identifier(slot['model_role'], 'Model role')
     validate_model(slot['selection'], f'{slot_name} model selection')
     validate_scope(slot['targets'], targets, slot_name)
@@ -210,14 +210,14 @@ def validate_slot(slot_name: str, value: object, targets: Sequence[str]) -> None
 
 def validate_attempts(value: object, targets: Sequence[str], slot_name: str) -> None:
     if not isinstance(value, list):
-        raise GradingError(f'{slot_name}: Task attempts must be a list')
+        raise GradingError(f'{slot_name}: task attempts must be a list')
     for attempt_number, attempt_value in enumerate(cast(list[object], value), start=1):
         attempt = exact_keys(attempt_value, Attempt.__annotations__, f'{slot_name} attempt')
         require(
             type(attempt['number']) is int and attempt['number'] == attempt_number,
-            f'{slot_name}: Nonconsecutive attempt number',
+            f'{slot_name}: non-consecutive attempt number',
         )
-        require(attempt['status'] in (*ACTIVE_STATUSES, *TERMINAL_STATUSES), f'{slot_name}: Unknown attempt status')
+        require(attempt['status'] in (*ACTIVE_STATUSES, *TERMINAL_STATUSES), f'{slot_name}: unknown attempt status')
         nonempty(attempt['request_id'], 'Dispatch request ID')
         validate_scope(attempt['targets'], targets, slot_name)
         for field in ('task_id', 'thread_id', 'link', 'executed_model'):
@@ -227,7 +227,7 @@ def validate_attempts(value: object, targets: Sequence[str], slot_name: str) -> 
 
 def validate_scope(value: object, targets: Sequence[str], label: str) -> None:
     selected = distinct_identifiers(value, f'{label} submission IDs')
-    require(bool(selected) and set(selected) <= set(targets), f'{label}: Invalid submission scope')
+    require(bool(selected) and set(selected) <= set(targets), f'{label}: invalid submission scope')
 
 
 def add_probe(
@@ -481,10 +481,20 @@ def probe_imported(root: Path, slot: Slot) -> bool:
 
 def parse_arguments() -> OrchestrationArguments:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--workspace', default=Path.cwd(), type=Path)
+    parser.add_argument(
+        '--workspace', default=Path.cwd(), type=Path, help='Assignment workspace; default current directory'
+    )
     commands = parser.add_subparsers(dest='command', required=True)
-    for command in ('start', 'status', 'add-probe', 'reserve', 'attach', 'finish'):
-        subcommand = commands.add_parser(command)
+    subcommand_help = {
+        'start': 'Initialise or resume an orchestration run journal',
+        'status': 'Print the active stage, runnable slots and unresolved submissions',
+        'add-probe': 'Register a remote check before the stage it gates',
+        'reserve': 'Reserve the next dispatch request for a runnable slot',
+        'attach': 'Record T3 delegate task and thread handles for a reserved attempt',
+        'finish': 'Record a terminal delegate status and validate completed outputs',
+    }
+    for command, description in subcommand_help.items():
+        subcommand = commands.add_parser(command, help=description)
         subcommand.add_argument('run')
         if command in ('reserve', 'attach', 'finish'):
             subcommand.add_argument('slot')

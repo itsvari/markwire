@@ -230,7 +230,8 @@ def prompt_preferences(preferences: Preferences, role: str, grader: str | None) 
         return text + '\nSubagent delegation is disabled for this role.'
     if delegation == 'required':
         minimum = policy['minimum_workers_per_submission']
-        text += f'\nUse at least {minimum} subagent worker(s) per assigned submission.'
+        worker_label = 'worker' if minimum == 1 else 'workers'
+        text += f'\nUse at least {minimum} subagent {worker_label} per assigned submission.'
     else:
         text += '\nUse subagents as needed and where available.'
     text += (
@@ -401,7 +402,7 @@ def ask_specialist_models(previous: dict[str, ModelSelection]) -> dict[str, Mode
 
 
 def ask_reporting(previous: ReportPreferences) -> ReportPreferences:
-    mode = choose('Intermediate guides', REPORT_MODES, previous['mode'])
+    mode = choose('Stage reports', REPORT_MODES, previous['mode'])
     if mode != 'selected':
         return {'mode': mode, 'stages': []}
     stages = comma_separated_values(ask(f'Stages ({", ".join(STAGES)})', ', '.join(previous['stages'])))
@@ -474,12 +475,12 @@ def ask_inputs(previous: Assignment) -> tuple[Assignment, dict[str, str]]:
     current = previous['snapshot_policy']
     mode = choose('Git source selection', ('explicit', 'head', 'deadline'), current['mode'])
     deadline = (
-        ask('Cutoff with time zone, e.g. 2026-12-01T17:00:00+00:00', current['deadline'])
+        ask('Cut-off with time zone, e.g. 2026-12-01T17:00:00+00:00', current['deadline'])
         if mode == 'deadline'
         else None
     )
     boundary = (
-        choose('Cutoff boundary', ('exclusive', 'inclusive'), current['boundary']) if deadline else current['boundary']
+        choose('Cut-off boundary', ('exclusive', 'inclusive'), current['boundary']) if deadline else current['boundary']
     )
     timestamp = (
         choose('Commit timestamps', ('committer', 'both'), current['timestamp']) if deadline else current['timestamp']
@@ -559,9 +560,13 @@ def review(root: Path) -> None:
         )
     checks = load_verification(root, tuple(workspace.criteria))
     preferences = load_preferences(root, workspace.config['graders'])
+    submission_label = 'submission' if len(workspace.roster) == 1 else 'submissions'
+    criterion_label = 'criterion' if len(workspace.criteria) == 1 else 'criteria'
+    check_label = 'verification check' if len(checks) == 1 else 'verification checks'
     section(
         'Review before freezing',
-        f'{len(workspace.roster)} submissions, {len(workspace.criteria)} criteria, {len(checks)} verification checks.',
+        f'{len(workspace.roster)} {submission_label}, {len(workspace.criteria)} {criterion_label}, '
+        f'{len(checks)} {check_label}.',
     )
     section('Worked grade', 'One illustrative score per criterion, using the course weights.')
     example: list[str] = []
@@ -581,10 +586,12 @@ def review(root: Path) -> None:
     print('\n'.join(example))
     rounding_digits = workspace.config.get('rounding_digits', DEFAULT_ROUNDING_DIGITS)
     print(f'  Total = {round(weighted_percentage_points, rounding_digits):g}%')
+    machine_count = len(preferences['machines'])
+    machine_label = 'remote machine' if machine_count == 1 else 'remote machines'
     section(
         'Run preferences',
-        f'{preferences["orchestration"]} launch, {preferences["reports"]["mode"]} guides, '
-        f'{len(preferences["machines"])} remote machines.',
+        f'{preferences["orchestration"]} launch, {preferences["reports"]["mode"]} stage reports, '
+        f'{machine_count} {machine_label}.',
     )
 
 
@@ -616,7 +623,7 @@ def setup(root: Path, *, review_only: bool = False) -> None:
                 },
             },
         )
-        section('Reports and machines', 'Choose guide checkpoints and declare optional remote workers.')
+        section('Reports and machines', 'Choose stage report checkpoints and declare optional remote machines.')
         preferences = {
             **preferences,
             'reports': ask_reporting(preferences['reports']),

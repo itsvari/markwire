@@ -1,3 +1,5 @@
 # Assignment brief
 
-Replace this file with the official brief before setting policy_confirmed to true.
+Replace this placeholder with the official assignment brief before setting `policy_confirmed` to `true`.
+
+Include the task requirements, expected deliverables, supported runtime or toolchain, and any constraints students were given.

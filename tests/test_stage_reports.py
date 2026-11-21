@@ -238,12 +238,36 @@ class StageReportTest(unittest.TestCase):
             self.rejected('import-decisions', response, '--reviewer', 'Example TA'),
         )
 
+        actionable = [
+            finding
+            for finding in fixture_objects(report['findings'])
+            if finding['status'] == 'open' and finding['options']
+        ]
+        self.assertGreater(len(actionable), 1)
         write_json(
             response,
             {**base, 'decisions': [{'issueId': merged['id'], 'optionId': 'yes'}]},
         )
+        self.assertIn(
+            'remediation question',
+            self.rejected('import-decisions', response, '--reviewer', 'Example TA'),
+        )
+        self.assertEqual(list((self.workspace / 'decisions').glob('*.json')), [])
+
+        decisions = [
+            {'issueId': finding['id'], 'optionId': 'yes' if finding['id'] == merged['id'] else 'defer'}
+            for finding in actionable
+        ]
+        write_json(response, {**base, 'decisions': decisions})
         receipt_path = Path(self.cli('import-decisions', response, '--reviewer', 'Example TA'))
-        self.assertEqual(fixture_objects(read_fixture(receipt_path)['actions'])[0]['owner'], 'grader')
+        actions = fixture_objects(read_fixture(receipt_path)['actions'])
+        self.assertEqual(len(actions), len(actionable))
+        self.assertEqual(
+            next(action for action in actions if action['issue_id'] == merged['id'])['owner'],
+            'grader',
+        )
+        self.assertTrue(all(action['owner'] == 'ta' for action in actions if action['issue_id'] != merged['id']))
+        write_json(response, {**base, 'decisions': list(reversed(decisions))})
         self.assertEqual(
             receipt_path,
             Path(self.cli('import-decisions', response, '--reviewer', 'Example TA')),
@@ -257,7 +281,13 @@ class StageReportTest(unittest.TestCase):
         write_json(changed, evaluation)
         write_json(
             response,
-            {**base, 'decisions': [{'issueId': merged['id'], 'optionId': 'no'}]},
+            {
+                **base,
+                'decisions': [
+                    {**decision, 'optionId': 'no'} if decision['issueId'] == merged['id'] else decision
+                    for decision in decisions
+                ],
+            },
         )
         self.assertIn(
             'stale',
@@ -302,6 +332,48 @@ class StageReportTest(unittest.TestCase):
         self.assertEqual(fixture_objects(finding['options'])[0]['label'], 'Request another remote attempt')
         reference = fixture_text(fixture_objects(finding['sources'])[0]['reference']).split('#')[0]
         self.assertTrue((self.workspace / reference).is_file())
+
+    def test_reconciled_score_comparison_does_not_require_an_answer(self) -> None:
+        verdict = cast(
+            DraftEvaluation,
+            json.loads(self.cli('template', '--role', 'arbiter', '--submission', 'example')),
+        )
+        for assessment in verdict['scores'].values():
+            assessment.update(
+                {
+                    'score': 3,
+                    'feedback': 'The example demonstrates the expected result.',
+                    'evidence': ['answer.txt:1'],
+                    'rationale': 'Reviewed the pinned answer.',
+                }
+            )
+        verdict['summary'] = 'The example meets the core requirement.'
+        write_json(self.workspace / 'evaluations/arbiter/example.json', verdict)
+        self.cli('stage-report', '--stage', 'arbitration')
+        report = read_fixture(self.workspace / 'reports/arbitration.json')
+        findings = fixture_objects(report['findings'])
+        reconciled = [finding for finding in findings if finding['status'] == 'reconciled']
+        self.assertTrue(reconciled)
+        self.assertTrue(all(not finding['options'] for finding in reconciled))
+        decisions = [
+            {'issueId': finding['id'], 'optionId': 'defer'}
+            for finding in findings
+            if finding['status'] == 'open' and finding['options']
+        ]
+        self.assertTrue(decisions)
+        response = self.parent / 'response.json'
+        write_json(
+            response,
+            {
+                'schemaVersion': 1,
+                'runId': report['run_id'],
+                'stage': 'arbitration',
+                'reviewDigest': report['review_digest'],
+                'decisions': decisions,
+            },
+        )
+        receipt = Path(self.cli('import-decisions', response, '--reviewer', 'Example TA'))
+        self.assertEqual(len(fixture_objects(read_fixture(receipt)['actions'])), len(decisions))
 
 
 if __name__ == '__main__':
