@@ -1,0 +1,39 @@
+# Desktop metadata and editor files
+.DS_Store
+._*
+.Spotlight-V100/
+.Trashes/
+Thumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+*~
+*.swp
+.idea/
+.vscode/
+
+# Local tooling
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+.venv/
+venv/
+node_modules/
+build/
+dist/
+*.egg-info/
+
+# Local configuration and grading data
+.env
+.env.*
+!.env.example
+/workspaces/
+/markwire-demo/
+/private/
+/remote_tasks/
+/scratch/
+/reports/
+/exports/

@@ -1,0 +1,14 @@
+[tool.mypy]
+python_version = "3.11"
+strict = true
+files = ["grading*.py", "examples/*.py", "tests/*.py"]
+
+[tool.ruff]
+target-version = "py311"
+line-length = 120
+
+[tool.ruff.lint]
+select = ["F"]
+
+[tool.ruff.format]
+quote-style = "single"

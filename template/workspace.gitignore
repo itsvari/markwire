@@ -1,0 +1,43 @@
+# Private course inputs, grading records, and generated outputs
+/input/
+/assignment.json
+/manifest.json
+/repositories/
+/snapshots/
+/schemas/
+/evaluations/
+/evidence/
+/coverage/
+/corrections/
+/verification/
+/review/
+/decisions/
+/reports/
+/exports/
+/scratch/
+/private/
+/revision/
+/remote_tasks/
+*.zip
+
+# Credentials and local Python tooling
+.env
+.env.*
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+.coverage
+
+# Local editor and operating system metadata
+.idea/
+.vscode/
+.DS_Store
+._*
+Thumbs.db
+ehthumbs.db
+[Dd]esktop.ini
+.directory

@@ -1,0 +1,264 @@
+:root {
+  color-scheme: dark;
+  --background: #111617;
+  --panel: #192022;
+  --line: #354044;
+  --ink: #e9eeeb;
+  --muted: #b0bdba;
+  --accent: #afdfca;
+  --body-font: "Avenir Next", "Segoe UI", sans-serif;
+  --heading-font: Georgia, "Palatino Linotype", serif;
+  --mono-font: "IBM Plex Mono", ui-monospace, monospace;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--background);
+  color: var(--ink);
+  font: 15px / 1.55 var(--body-font);
+}
+
+main {
+  max-width: 1600px;
+  margin: auto;
+  padding: 38px 40px 80px;
+}
+
+h1,
+h2 {
+  font-family: var(--heading-font);
+  font-weight: 400;
+  line-height: 1.15;
+  letter-spacing: -0.025em;
+}
+
+h1 {
+  max-width: 1000px;
+  margin: 12px 0 18px;
+  font-size: 44px;
+}
+
+h2 {
+  margin: 8px 0 16px;
+  font-size: 30px;
+}
+
+h3 {
+  margin: 0 0 14px;
+  font-size: 16px;
+}
+
+p {
+  margin: 10px 0;
+}
+
+.eyebrow {
+  font-family: var(--mono-font);
+  color: var(--accent);
+  font-size: 12px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.intro {
+  max-width: 900px;
+  color: var(--muted);
+}
+
+.masthead {
+  padding-bottom: 24px;
+}
+
+article {
+  padding: 30px 0 34px;
+  border-top: 1px solid var(--line);
+}
+
+.scope {
+  display: inline-block;
+  margin-bottom: 8px;
+  padding: 3px 8px;
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.members {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 24px;
+  margin: 0 0 16px;
+  padding: 0;
+  list-style: none;
+}
+
+.members li {
+  font-size: 14px;
+}
+
+.github {
+  font-family: var(--mono-font);
+  color: var(--accent);
+  font-size: 12px;
+}
+
+.member-id,
+.source,
+.total-note {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.source {
+  margin: 4px 0 20px;
+  font: 11px / 1.6 var(--mono-font);
+  overflow-wrap: anywhere;
+}
+
+.overall {
+  margin: 20px 0;
+  padding: 20px 24px;
+  border-left: 3px solid var(--accent);
+  background: #1b2b27;
+}
+
+.overall h3 {
+  margin-bottom: 10px;
+  color: var(--accent);
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.overall p {
+  max-width: 1200px;
+  margin: 0;
+  white-space: pre-line;
+}
+
+.scroll {
+  margin: 12px 0 26px;
+  border: 1px solid var(--line);
+  overflow-x: auto;
+}
+
+.scroll:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+.student-grade {
+  color: var(--accent);
+  font-size: 19px;
+}
+
+.student-table {
+  width: 100%;
+  min-width: 650px;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.student-table th,
+.student-table td {
+  padding: 14px;
+  border-bottom: 1px solid var(--line);
+  vertical-align: top;
+  overflow-wrap: anywhere;
+}
+
+.student-table th {
+  width: 24%;
+  font-weight: 400;
+}
+
+.student-table thead th {
+  background: var(--panel);
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.045em;
+  text-transform: uppercase;
+}
+
+.student-table td:nth-child(2) {
+  width: 100px;
+  color: var(--accent);
+  white-space: nowrap;
+}
+
+.student-table td:last-child {
+  white-space: pre-line;
+}
+
+.student-table tbody tr:last-child > * {
+  border-bottom: 0;
+}
+
+@media (max-width: 700px) {
+  main {
+    padding: 24px 18px 60px;
+  }
+
+  h1 {
+    font-size: 34px;
+  }
+
+  h2 {
+    font-size: 27px;
+  }
+
+  .overall {
+    padding: 16px;
+  }
+
+  .members {
+    display: block;
+  }
+
+  .members li {
+    margin: 6px 0;
+  }
+}
+
+@media print {
+  :root {
+    --background: white;
+    --panel: #f1f4f2;
+    --line: #d3d8d5;
+    --ink: black;
+    --muted: black;
+    --accent: black;
+  }
+
+  main {
+    padding: 0;
+  }
+
+  article {
+    break-before: page;
+  }
+
+  article:first-of-type {
+    break-before: auto;
+  }
+
+  .overall {
+    background: var(--panel);
+  }
+
+  .scroll {
+    overflow: visible;
+  }
+
+  .student-table {
+    min-width: 0;
+    font-size: 10px;
+  }
+}

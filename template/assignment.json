@@ -1,0 +1,39 @@
+{
+  "assignment_id": "new-assignment",
+  "title": "New assignment grading",
+  "policy_confirmed": false,
+  "graders": [
+    "grader_A",
+    "grader_B",
+    "grader_C"
+  ],
+  "criteria": [
+    {
+      "key": "correctness",
+      "label": "Correctness",
+      "max_score": 4,
+      "weight": 70,
+      "guidance": "See input/rubric.md, Correctness.",
+      "scope": "unresolved"
+    },
+    {
+      "key": "design",
+      "label": "Design",
+      "max_score": 4,
+      "weight": 30,
+      "guidance": "See input/rubric.md, Design.",
+      "scope": "unresolved"
+    }
+  ],
+  "snapshot_policy": {
+    "mode": "explicit",
+    "deadline": null,
+    "boundary": "exclusive",
+    "timestamp": "committer"
+  },
+  "review_thresholds": {
+    "criterion_spread": 1,
+    "total_spread": 3
+  },
+  "baseline_required": true
+}
